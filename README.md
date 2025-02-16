@@ -18,7 +18,7 @@ This is frontend starter project for nodejs-aws mentoring program. It uses the f
 ## Links
 
 - [CloudFront](http://d2uhuc2nb8wsg0.cloudfront.net/)
-- [S3 Bucket](https://s3.console.aws.amazon.com/s3/buckets/websitestack-reactshopbucket4b36a4a1-vn2nypejbfsi)
+- [S3 Bucket](https://s3.us-east-2.amazonaws.com/websitestack-reactshopbucket4b36a4a1-vn2nypejbfsi)
 
 ## Available Scripts
 
