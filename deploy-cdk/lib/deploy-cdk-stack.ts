@@ -5,6 +5,8 @@ import { RemovalPolicy } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
 
 // Stack is a group of AWS resources
 export class DeployCdkStack extends cdk.Stack {
@@ -63,11 +65,65 @@ export class DeployCdkStack extends cdk.Stack {
       ],
     });
 
+    // Lambda Functions Creation
+    const createLambdaFunction = (id: string, handler: string) => {
+      return new lambda.Function(this, id, {
+        // determines which language-specific environment will be used and its version
+        runtime: lambda.Runtime.NODEJS_18_X,
+
+        // determines which function should be called
+        handler: handler,
+
+        // file location
+        code: lambda.Code.fromAsset("../server", {
+          exclude: ["tests/*", "node_modules/*", "*.test.js"],
+        }),
+      });
+    };
+
+    const getProductsListLambda = createLambdaFunction(
+      "GetProductsListLambda",
+      "handlers/index.getProductsList"
+    );
+
+    const getProductByIdLambda = createLambdaFunction(
+      "GetProductByIdLambda",
+      "handlers/index.getProductById"
+    );
+
+    // API Gateway Creation
+    // Creates REST API with "ProductServiceApi" name
+    const api = new apigateway.RestApi(this, "ProductServiceApi", {
+      // CORS is required for the browser to allow requests to the API from another domain.
+      defaultCorsPreflightOptions: {
+        allowOrigins: [distribution.distributionDomainName],
+
+        // allow only GET method, others will be blocked
+        allowMethods: ["GET"],
+      },
+      // Stage environment options
+      deployOptions: {
+        stageName: "dev",
+      },
+    });
+
+    const productsResource = api.root.addResource("products");
+    productsResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(getProductsListLambda)
+    );
+
+    const productResource = productsResource.addResource("{productId}");
+    productResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(getProductByIdLambda)
+    );
+
     // Deployment Setup
     new s3deploy.BucketDeployment(this, "ReactAppDeployment", {
       // takes files from our build folder and archive them
       // these files will be uploaded to S3
-      sources: [s3deploy.Source.asset("../dist")],
+      sources: [s3deploy.Source.asset("../client/dist")],
 
       // we specify in which bucket the files should be saved
       destinationBucket: bucket,
@@ -94,9 +150,9 @@ export class DeployCdkStack extends cdk.Stack {
       description: "Website URL",
     });
 
-    new cdk.CfnOutput(this, "S3BucketURL", {
-      value: `https://s3.console.aws.amazon.com/s3/buckets/${bucket.bucketName}`,
-      description: "S3 Bucket URL",
+    new cdk.CfnOutput(this, "ApiGatewayURL", {
+      value: api.url,
+      description: "Base API URL",
     });
   }
 }
