@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   
 servers:
-  - url: https://tqepc8bhxl.execute-api.us-east-2.amazonaws.com/dev
+  - url: https://j5nyxrx3vg.execute-api.us-east-2.amazonaws.com/dev
     description: DEV Environment (API Gateway)
     
 tags:
