@@ -1,3 +1,3 @@
-const allowedOrigin = "https://d2uhuc2nb8wsg0.cloudfront.net";
+const allowedOrigin = "https://d3oohsvttw3zaj.cloudfront.net";
 
 module.exports = { allowedOrigin };

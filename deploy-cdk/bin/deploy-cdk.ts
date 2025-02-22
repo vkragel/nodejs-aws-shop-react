@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { DeployCdkStack } from "../lib/deploy-cdk-stack";
+import FrontendStack from "../stacks/frontend";
+import BackendStack from "../stacks/backend";
 
 const app = new cdk.App();
-new DeployCdkStack(app, "WebsiteStack");
+
+const frontendStack = new FrontendStack(app, "FrontendStack");
+
+new BackendStack(app, "BackendStack", {
+  distribution: frontendStack.distribution,
+});
