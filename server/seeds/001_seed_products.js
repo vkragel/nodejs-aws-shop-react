@@ -1,10 +1,6 @@
 const { v4 } = require("uuid");
-const {
-  DynamoDBClient,
-  BatchWriteItemCommand,
-} = require("@aws-sdk/client-dynamodb");
-
-const client = new DynamoDBClient({ region: "us-east-2" });
+const { PutCommand } = require("@aws-sdk/lib-dynamodb");
+const { dynamoDb } = require("../services/dynamoDbClient");
 
 const TABLE_NAME = "products";
 
@@ -47,27 +43,24 @@ const products = [
   },
 ];
 
-const putRequests = products.map((product) => ({
-  PutRequest: {
-    Item: {
-      id: { S: product.id },
-      title: { S: product.title },
-      description: { S: product.description },
-      price: { N: product.price.toString() },
-    },
-  },
-}));
-
 async function seed() {
   try {
-    const command = new BatchWriteItemCommand({
-      RequestItems: {
-        [TABLE_NAME]: putRequests,
-      },
-    });
+    for (let product of products) {
+      const command = new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          id: product.id,
+          title: product.title,
+          description: product.description,
+          price: product.price,
+        },
+      });
 
-    await client.send(command);
-    console.log("Products seeded successfully");
+      await dynamoDb.send(command);
+      console.log(`Product "${product.title}" seeded successfully`);
+    }
+
+    console.log("All products seeded successfully");
   } catch (err) {
     console.log("Error seeding products: ", err);
   }
