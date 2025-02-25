@@ -70,6 +70,7 @@ export class ProductService extends Construct {
     // without this method, the lambda will not have permission to access the DynamoDB table.
     this.productsTable.grantReadData(getProductsListLambda);
     this.productsTable.grantReadData(getProductByIdLambda);
+    this.stocksTable.grantReadData(getProductsListLambda);
     this.stocksTable.grantReadData(getProductByIdLambda);
 
     // API Gateway Creation
