@@ -1,0 +1,73 @@
+openapi: 3.0.0
+info:
+  title: My Store API
+  version: 1.0.0
+  
+servers:
+  - url: https://j5nyxrx3vg.execute-api.us-east-2.amazonaws.com/dev
+    description: DEV Environment (API Gateway)
+    
+tags:
+  - name: Products
+  
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      description: Returns a products list
+      operationId: getProductsList
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'          
+        '500':
+          description: Server Error
+        
+  /products/{productId}:
+    get:
+      tags:
+        - Products
+      description: Returns a single product
+      operationId: getProductById
+      parameters:
+        - name: productId
+          in: path
+          description: ID of product to return
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product' 
+        '404':
+          description: Product not found
+        '500':
+          description: Server Error
+    
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "Author: William Shakespeare"
+        id:
+          type: string
+          example: "1"
+        price:
+          type: number
+          example: 20
+        title:
+          type: string
+          example: "Romeo and Juliet"

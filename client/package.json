@@ -11,7 +11,7 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint --ignore-path .gitignore --fix src",
     "prettier": "prettier src --write",
-    "deploy": "npm run build && aws s3 sync dist/ s3://websitestack-reactshopbucket4b36a4a1-vn2nypejbfsi --delete && aws cloudfront create-invalidation --distribution-id ESDA1LRWFHJL1 --paths \"/*\""
+    "deploy": "npm run build && aws s3 sync dist/ s3://frontendstack-reactshopbucket4b36a4a1-vhgkpojjqkmn --delete && aws cloudfront create-invalidation --distribution-id E1FCYU06F7Z3WL --paths \"/*\""
   },
   "dependencies": {
     "@emotion/react": "^11.9.3",
