@@ -2,7 +2,8 @@ const { v4 } = require("uuid");
 const { PutCommand } = require("@aws-sdk/lib-dynamodb");
 const { dynamoDb } = require("../services/dynamoDbClient");
 
-const TABLE_NAME = "products";
+const PRODUCTS_TABLE_NAME = "products";
+const STOCKS_TABLE_NAME = "stocks";
 
 const products = [
   {
@@ -47,7 +48,7 @@ async function seed() {
   try {
     for (let product of products) {
       const command = new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE_NAME,
         Item: {
           id: product.id,
           title: product.title,
@@ -61,8 +62,38 @@ async function seed() {
     }
 
     console.log("All products seeded successfully");
+
+    await seedStocks(products);
   } catch (err) {
     console.log("Error seeding products: ", err);
+  }
+}
+
+async function seedStocks(products) {
+  const stocks = products.map(({ id }) => ({
+    product_id: id,
+    count: Math.floor(Math.random() * 25),
+  }));
+
+  try {
+    for (let stock of stocks) {
+      const command = new PutCommand({
+        TableName: STOCKS_TABLE_NAME,
+        Item: {
+          product_id: stock.product_id,
+          count: stock.count,
+        },
+      });
+
+      await dynamoDb.send(command);
+      console.log(
+        `Stock for product_id "${stock.product_id}" seeded successfully`
+      );
+    }
+
+    console.log("All stocks seeded successfully");
+  } catch (error) {
+    console.error("Error seeding stocks: ", err);
   }
 }
 
