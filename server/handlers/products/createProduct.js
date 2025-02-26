@@ -3,37 +3,48 @@ const { createProductWithStock } = require("../../services/productService");
 const { randomUUID } = require("crypto");
 
 exports.createProduct = async (event) => {
-  const {
-    title,
-    price,
-    description = "",
-    count,
-  } = JSON.parse(event?.body || {});
+  if (!event?.body || typeof event.body !== "string") {
+    return createResponse(400, { message: "Invalid request body" });
+  }
 
-  if (!title || !price || !count) {
-    return createResponse(400, { message: "Missing required fields" });
+  let parsedBody;
+  try {
+    parsedBody = JSON.parse(event.body);
+  } catch (error) {
+    return createResponse(400, { message: "Invalid JSON format" });
+  }
+
+  const { title, price, description = "", count } = parsedBody;
+
+  if (!title || typeof title !== "string" || title.trim().length === 0) {
+    return createResponse(400, {
+      message: "Title is required and must be a non-empty string",
+    });
+  }
+
+  if (typeof price !== "number" || price <= 0) {
+    return createResponse(400, {
+      message: "Price is required and must be a positive number",
+    });
+  }
+
+  if (typeof count !== "number" || count < 0) {
+    return createResponse(400, {
+      message: "Count is required and must be a positive number",
+    });
   }
 
   const product_id = randomUUID();
 
-  const product = {
-    id: product_id,
-    title,
-    price,
-    description,
-  };
-
-  const stock = {
-    product_id,
-    count,
-  };
+  const product = { id: product_id, title, price, description };
+  const stock = { product_id, count };
 
   try {
     await createProductWithStock(product, stock);
 
-    return createResponse(201, {
-      message: "Product and stock created successfully",
-    });
+    const productWithStock = { ...product, count: stock.count };
+
+    return createResponse(201, productWithStock);
   } catch (error) {
     console.error("Error creating product and stock:", error);
 
