@@ -1,7 +1,10 @@
-const AWS = require("aws-sdk");
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient({
+const client = new DynamoDBClient({
   region: "us-east-2",
 });
 
-module.exports = { dynamoDb };
+const dynamoDb = DynamoDBDocumentClient.from(client);
+
+export { dynamoDb };
