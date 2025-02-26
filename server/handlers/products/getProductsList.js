@@ -1,5 +1,5 @@
-const { getAllProductsWithStock } = require("../../services/productService");
 const { createResponse } = require("../../utils/responseBuilder");
+const { getAllProductsWithStock } = require("../../services/productService");
 
 exports.getProductsList = async () => {
   try {

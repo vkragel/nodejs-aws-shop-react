@@ -1,25 +1,21 @@
-const { products } = require("./products");
-const { allowedOrigin } = require("../../config");
+const { createResponse } = require("../../utils/responseBuilder");
+const { getProductByIdWithCount } = require("../../services/productService");
 
 exports.getProductById = async (event) => {
   const { productId } = event.pathParameters;
 
-  const product = products.find(({ id }) => id === productId);
+  if (!productId)
+    return createResponse(400, { message: "Product ID is required" });
 
-  if (!product) {
-    return {
-      statusCode: 404,
-      body: JSON.stringify({ message: "Product not found" }),
-    };
+  try {
+    const product = await getProductByIdWithCount(productId);
+
+    if (!product) {
+      return createResponse(404, { message: "Product not found" });
+    }
+
+    return createResponse(200, product);
+  } catch (error) {
+    return createResponse(500, { message: "Internal Server Error" });
   }
-
-  return {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": allowedOrigin,
-      "Access-Control-Allow-Methods": "GET",
-    },
-    body: JSON.stringify(product),
-  };
 };
