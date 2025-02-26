@@ -5,8 +5,6 @@ import BackendStack from "../stacks/backend";
 
 const app = new cdk.App();
 
-const frontendStack = new FrontendStack(app, "FrontendStack");
+new FrontendStack(app, "FrontendStack");
 
-new BackendStack(app, "BackendStack", {
-  distribution: frontendStack.distribution,
-});
+new BackendStack(app, "BackendStack");

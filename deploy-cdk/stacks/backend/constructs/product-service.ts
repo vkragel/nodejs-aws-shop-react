@@ -2,19 +2,14 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
-import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import { Table, BillingMode, AttributeType } from "aws-cdk-lib/aws-dynamodb";
-
-interface ProductServiceProps extends cdk.StackProps {
-  distribution: cloudfront.Distribution;
-}
 
 export class ProductService extends Construct {
   public readonly api: apigateway.RestApi;
   public readonly productsTable: Table;
   public readonly stocksTable: Table;
 
-  constructor(scope: Construct, id: string, props: ProductServiceProps) {
+  constructor(scope: Construct, id: string) {
     super(scope, id);
 
     this.productsTable = new Table(this, "ProductsTable", {
@@ -78,7 +73,7 @@ export class ProductService extends Construct {
     this.api = new apigateway.RestApi(this, "ProductServiceApi", {
       // CORS is required for the browser to allow requests to the API from another domain.
       defaultCorsPreflightOptions: {
-        allowOrigins: [props.distribution.distributionDomainName],
+        allowOrigins: ["https://d3oohsvttw3zaj.cloudfront.net"],
 
         // allow only GET method, others will be blocked
         allowMethods: ["GET"],
