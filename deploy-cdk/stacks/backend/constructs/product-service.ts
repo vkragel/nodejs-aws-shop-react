@@ -39,7 +39,7 @@ export class ProductService extends Construct {
 
         // file location
         code: lambda.Code.fromAsset("../server", {
-          exclude: ["tests/*", "node_modules/*", "*.test.js"],
+          exclude: ["tests/*", "node_modules/*", "*.test.js", "seeds/*"],
         }),
 
         // Lambda function can work with different tables depending on the environment
@@ -60,23 +60,30 @@ export class ProductService extends Construct {
       "handlers/index.getProductById"
     );
 
+    const createProductLambda = createLambdaFunction(
+      "CreateProductLambda",
+      "handlers/index.createProduct"
+    );
+
     // allow lambda function have access to read and write in DynamoDB
     // it creates IAM policy which allows Lambda function to do GetItem, PutItem, Scan, DeleteItem etc
     // without this method, the lambda will not have permission to access the DynamoDB table.
     this.productsTable.grantReadData(getProductsListLambda);
     this.productsTable.grantReadData(getProductByIdLambda);
+    this.productsTable.grantWriteData(createProductLambda);
     this.stocksTable.grantReadData(getProductsListLambda);
     this.stocksTable.grantReadData(getProductByIdLambda);
+    this.stocksTable.grantWriteData(createProductLambda);
 
     // API Gateway Creation
     // Creates REST API with "ProductServiceApi" name
     this.api = new apigateway.RestApi(this, "ProductServiceApi", {
       // CORS is required for the browser to allow requests to the API from another domain.
       defaultCorsPreflightOptions: {
-        allowOrigins: ["https://d3oohsvttw3zaj.cloudfront.net"],
+        allowOrigins: ["*"],
 
         // allow only GET method, others will be blocked
-        allowMethods: ["GET"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE"],
       },
       // Stage environment options
       deployOptions: {
@@ -88,6 +95,10 @@ export class ProductService extends Construct {
     productsResource.addMethod(
       "GET",
       new apigateway.LambdaIntegration(getProductsListLambda)
+    );
+    productsResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(createProductLambda)
     );
 
     const productResource = productsResource.addResource("{productId}");

@@ -1,39 +1,39 @@
-const { v4 } = require("uuid");
+const { randomUUID } = require("crypto");
 const { dynamoDb } = require("../utils/dynamoDb");
 
 const products = [
   {
-    id: v4(),
+    id: randomUUID(),
     title: "Fly Away",
     price: 24,
     description: "Author: Kristin Hannah",
   },
   {
-    id: v4(),
+    id: randomUUID(),
     title: "Last Call",
     price: 15,
     description: "Author: Elon Green",
   },
   {
-    id: v4(),
+    id: randomUUID(),
     title: "Arcadia",
     price: 23,
     description: "Author: Lauren Groff",
   },
   {
-    id: v4(),
+    id: randomUUID(),
     title: "Never Caught",
     price: 15,
     description: "Author: Erica Armstrong Dunbar",
   },
   {
-    id: v4(),
+    id: randomUUID(),
     title: "On Tennis",
     price: 23,
     description: "Author: David Foster Wallace",
   },
   {
-    id: v4(),
+    id: randomUUID(),
     title: "Cold as Hell",
     price: 15,
     description: "Author: Kelly Armstrong",

@@ -2,6 +2,10 @@ const {
   getAllItemsFromDynamoDb,
   getItemFromDynamoDb,
 } = require("../utils/dynamoDb");
+const {
+  generateTransaction,
+  transactWrite,
+} = require("../utils/dynamoDbTransaction");
 
 const PRODUCTS_TABLE_NAME = process.env.PRODUCTS_TABLE;
 const STOCKS_TABLE_NAME = process.env.STOCKS_TABLE;
@@ -46,4 +50,27 @@ const getProductByIdWithCount = async (productId) => {
   }
 };
 
-module.exports = { getAllProductsWithStock, getProductByIdWithCount };
+const createProductWithStock = async (product, stock) => {
+  const operations = [
+    {
+      Action: "Put",
+      TableName: PRODUCTS_TABLE_NAME,
+      Item: product,
+    },
+    {
+      Action: "Put",
+      TableName: STOCKS_TABLE_NAME,
+      Item: stock,
+    },
+  ];
+
+  const transactionParams = generateTransaction(operations);
+
+  await transactWrite(transactionParams);
+};
+
+module.exports = {
+  getAllProductsWithStock,
+  getProductByIdWithCount,
+  createProductWithStock,
+};
