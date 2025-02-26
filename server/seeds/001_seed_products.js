@@ -1,5 +1,6 @@
 const { randomUUID } = require("crypto");
 const { dynamoDb } = require("../utils/dynamoDb");
+const { PutCommand } = require("@aws-sdk/lib-dynamodb");
 
 const products = [
   {
@@ -48,21 +49,31 @@ const stocks = products.map(({ id }) => ({
 async function seed() {
   try {
     console.log("Start seeding products...");
+
     await Promise.all(
       products.map(async (product) => {
         const params = { TableName: "products", Item: product };
-        await dynamoDb.put(params).promise();
+
+        const command = new PutCommand(params);
+
+        await dynamoDb.send(command);
       })
     );
+
     console.log("Products seeded successfully");
 
     console.log("Start seeding stocks...");
+
     await Promise.all(
       stocks.map(async (stock) => {
         const params = { TableName: "stocks", Item: stock };
-        await dynamoDb.put(params).promise();
+
+        const command = new PutCommand(params);
+
+        await dynamoDb.send(command);
       })
     );
+
     console.log("Stocks seeded successfully");
 
     console.log("Data successfully loaded to DynamoDB");
