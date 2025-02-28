@@ -37,6 +37,7 @@ describe("createProduct handler", () => {
     const event = {
       body: JSON.stringify({
         title: "",
+        description: "Test Description",
         price: 20,
         count: 20,
       }),
@@ -56,6 +57,7 @@ describe("createProduct handler", () => {
     const event = {
       body: JSON.stringify({
         title: "Test Title",
+        description: "Test Description",
         price: null,
         count: 20,
       }),
@@ -71,11 +73,32 @@ describe("createProduct handler", () => {
     );
   });
 
+  test("should return status code 400 if description is empty", async () => {
+    const event = {
+      body: JSON.stringify({
+        title: "Test Title",
+        description: null,
+        price: 20,
+        count: 20,
+      }),
+    };
+
+    const response = await createProduct(event);
+
+    expect(response.statusCode).toBe(400);
+
+    const body = JSON.parse(response.body);
+    expect(body.message).toBe(
+      "Description is required and must be a non-empty string"
+    );
+  });
+
   test("should return status code 400 if count is empty", async () => {
     const event = {
       body: JSON.stringify({
         title: "Test Title",
         price: 20,
+        description: "Test Description",
         count: null,
       }),
     };
@@ -96,6 +119,7 @@ describe("createProduct handler", () => {
         title: "Test Title",
         price: 20,
         count: 20,
+        description: "Test Description",
       }),
     };
     createProductWithStock.mockResolvedValue(null);
@@ -118,6 +142,7 @@ describe("createProduct handler", () => {
         title: "Test Title",
         price: 20,
         count: 20,
+        description: "Test Description",
       }),
     };
     createProductWithStock.mockRejectedValue(new Error("Database error"));

@@ -14,7 +14,7 @@ exports.createProduct = async (event) => {
     return createResponse(400, { message: "Invalid JSON format" });
   }
 
-  const { title, price, description = "", count } = parsedBody;
+  const { title, price, description, count } = parsedBody;
 
   if (!title || typeof title !== "string" || title.trim().length === 0) {
     return createResponse(400, {
@@ -25,6 +25,12 @@ exports.createProduct = async (event) => {
   if (typeof price !== "number" || price <= 0) {
     return createResponse(400, {
       message: "Price is required and must be a positive number",
+    });
+  }
+
+  if (!description || typeof description !== "string" || description.trim().length === 0) {
+    return createResponse(400, {
+      message: "Description is required and must be a non-empty string",
     });
   }
 
