@@ -1,4 +1,4 @@
-const { getProductById } = require("../../../handlers");
+const { getProductById } = require("../../../handlers/products");
 const { getProductByIdWithCount } = require("../../../services/productService");
 const { createResponse } = require("../../../utils/responseBuilder");
 

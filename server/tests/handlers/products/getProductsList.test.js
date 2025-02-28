@@ -1,4 +1,4 @@
-const { getProductsList } = require("../../../handlers");
+const { getProductsList } = require("../../../handlers/products");
 const { getAllProductsWithStock } = require("../../../services/productService");
 const { createResponse } = require("../../../utils/responseBuilder");
 

@@ -3,6 +3,7 @@ import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Table, BillingMode, AttributeType } from "aws-cdk-lib/aws-dynamodb";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 
 export class ProductService extends Construct {
   public readonly api: apigateway.RestApi;
@@ -30,17 +31,15 @@ export class ProductService extends Construct {
 
     // Lambda Functions Creation
     const createLambdaFunction = (id: string, handler: string) => {
-      return new lambda.Function(this, id, {
+      return new NodejsFunction(this, id, {
         // determines which language-specific environment will be used and its version
         runtime: lambda.Runtime.NODEJS_18_X,
 
+        // file location
+        entry: "../server/handlers/products/index.js",
+
         // determines which function should be called
         handler: handler,
-
-        // file location
-        code: lambda.Code.fromAsset("../server", {
-          exclude: ["tests/*", "node_modules/*", "*.test.js", "seeds/*"],
-        }),
 
         // Lambda function can work with different tables depending on the environment
         environment: {
@@ -52,17 +51,17 @@ export class ProductService extends Construct {
 
     const getProductsListLambda = createLambdaFunction(
       "GetProductsListLambda",
-      "handlers/index.getProductsList"
+      "getProductsList"
     );
 
     const getProductByIdLambda = createLambdaFunction(
       "GetProductByIdLambda",
-      "handlers/index.getProductById"
+      "getProductById"
     );
 
     const createProductLambda = createLambdaFunction(
       "CreateProductLambda",
-      "handlers/index.createProduct"
+      "createProduct"
     );
 
     // allow lambda function have access to read and write in DynamoDB
