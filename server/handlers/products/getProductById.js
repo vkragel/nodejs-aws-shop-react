@@ -3,13 +3,13 @@ const { getProductByIdWithCount } = require("../../services/productService");
 const logger = require("../../utils/logger");
 
 exports.getProductById = async (event) => {
+  const { productId } = event.pathParameters;
+
   logger.info("Received request to get product by ID", {
     productId,
     pathParameters: event.pathParameters,
     headers: event.headers,
   });
-
-  const { productId } = event.pathParameters;
 
   if (!productId) {
     logger.error("Product ID is missing");
