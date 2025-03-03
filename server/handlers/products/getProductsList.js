@@ -1,14 +1,24 @@
-const { products } = require("./products");
-const { allowedOrigin } = require("../../config");
+const { createResponse } = require("../../utils/responseBuilder");
+const { getAllProductsWithStock } = require("../../services/productService");
+const logger = require("../../utils/logger");
 
 exports.getProductsList = async () => {
-  return {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": allowedOrigin,
-      "Access-Control-Allow-Methods": "GET",
-    },
-    body: JSON.stringify(products),
-  };
+  try {
+    logger.info("Fetching products with stock");
+
+    const productsWithStock = await getAllProductsWithStock();
+
+    logger.info("Successfully fetched products with stock", {
+      productsCount: productsWithStock.length,
+    });
+
+    return createResponse(200, productsWithStock);
+  } catch (error) {
+    logger.error("Error fetching products", {
+      error: error.message,
+      stack: error.stack,
+    });
+
+    return createResponse(500, { message: "Internal Server Error" });
+  }
 };

@@ -1,25 +1,42 @@
-const { products } = require("./products");
-const { allowedOrigin } = require("../../config");
+const { createResponse } = require("../../utils/responseBuilder");
+const { getProductByIdWithCount } = require("../../services/productService");
+const logger = require("../../utils/logger");
 
 exports.getProductById = async (event) => {
   const { productId } = event.pathParameters;
 
-  const product = products.find(({ id }) => id === productId);
+  logger.info("Received request to get product by ID", {
+    productId,
+    pathParameters: event.pathParameters,
+    headers: event.headers,
+  });
 
-  if (!product) {
-    return {
-      statusCode: 404,
-      body: JSON.stringify({ message: "Product not found" }),
-    };
+  if (!productId) {
+    logger.error("Product ID is missing");
+
+    return createResponse(400, { message: "Product ID is required" });
   }
 
-  return {
-    statusCode: 200,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": allowedOrigin,
-      "Access-Control-Allow-Methods": "GET",
-    },
-    body: JSON.stringify(product),
-  };
+  try {
+    logger.info("Fetching product");
+
+    const product = await getProductByIdWithCount(productId);
+
+    if (!product) {
+      logger.warn("Product not found", { productId });
+
+      return createResponse(404, { message: "Product not found" });
+    }
+
+    logger.info("Product found", { productId, product });
+
+    return createResponse(200, product);
+  } catch (error) {
+    logger.error("Error fetching product", {
+      error: error.message,
+      stack: error.stack,
+    });
+
+    return createResponse(500, { message: "Internal Server Error" });
+  }
 };
