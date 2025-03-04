@@ -19,6 +19,12 @@ exports.importProductsFile = async (event) => {
     return createResponse(400, { message: "Invalid file name format" });
   }
 
+  if (!fileName.toLowerCase().endsWith(".csv")) {
+    logger.warn(`Invalid file format: ${fileName}`);
+
+    return createResponse(400, { message: "Only .csv files are allowed" });
+  }
+
   try {
     const signedUrl = await generateSignedUrl(fileName);
 
