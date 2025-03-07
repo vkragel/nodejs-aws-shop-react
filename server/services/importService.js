@@ -49,24 +49,42 @@ const parseCsv = async (stream) => {
 
   let rowCount = 0;
 
+  const headers = {
+    title: "title",
+    description: "description",
+    price: "price",
+    count: "count",
+  };
+
   try {
-    await pipeline(stream, csv({ headers: true }), async function* (source) {
-      for await (const row of source) {
-        if (Object.keys(row).length === 0) {
-          logger.warn("Empty row detected", { rowNumber: rowCount + 1 });
-          continue;
+    await pipeline(
+      stream,
+      csv({ skipLines: 1, headers: Object.keys(headers) }),
+      async function* (source) {
+        for await (const row of source) {
+          if (Object.keys(row).length === 0) {
+            logger.warn("Empty row detected", { rowNumber: rowCount + 1 });
+            continue;
+          }
+
+          rowCount++;
+
+          const transformedRow = {
+            title: row.title,
+            description: row.description,
+            price: Number(row.price),
+            count: Number(row.count),
+          };
+
+          logger.info(`Parsed CSV row ${rowCount}`, {
+            rowNumber: rowCount,
+            columnCount: Object.keys(transformedRow).length,
+            columnNames: Object.keys(transformedRow),
+            data: transformedRow,
+          });
         }
-
-        rowCount++;
-
-        logger.info(`Parsed CSV row ${rowCount}`, {
-          rowNumber: rowCount,
-          columnCount: Object.keys(row).length,
-          columnNames: Object.keys(row),
-          data: row,
-        });
       }
-    });
+    );
 
     if (rowCount === 0) {
       logger.warn("No rows were parsed from the CSV file");
