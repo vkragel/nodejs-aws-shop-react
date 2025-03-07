@@ -13,13 +13,23 @@ exports.parseProductsFile = async (event) => {
   }
 
   const record = event.Records[0];
+  const { bucket, object } = record?.s3 || {};
 
-  const bucket = record.s3.bucket.name;
-  const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, " "));
+  const bucketName = bucket?.name;
+  const key = object?.key
+    ? decodeURIComponent(object.key.replace(/\+/g, " "))
+    : null;
+
+  if (!bucketName || !key) {
+    const missingField = !bucketName ? "bucket name" : "object key";
+    logger.warn(`The ${missingField} is undefined`, { record });
+
+    return createResponse(400, { message: `The ${missingField} is undefined` });
+  }
 
   if (!key.startsWith(UPLOADED_FOLDER)) {
     logger.warn(`The file is not in '${UPLOADED_FOLDER}' folder`, {
-      bucket,
+      bucketName,
       key,
     });
 
@@ -29,11 +39,11 @@ exports.parseProductsFile = async (event) => {
   }
 
   try {
-    logger.info("Parsing file", { bucket, key });
+    logger.info("Parsing file", { bucketName, key });
 
-    await processImportFile(bucket, key);
+    await processImportFile(bucketName, key);
 
-    logger.info("File parsed successfully", { bucket, key });
+    logger.info("File parsed successfully", { bucketName, key });
 
     return createResponse(200, { message: "File processed successfully" });
   } catch (error) {
