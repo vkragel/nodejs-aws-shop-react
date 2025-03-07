@@ -1,6 +1,5 @@
 const { getProductById } = require("../../../handlers/products");
 const { getProductByIdWithCount } = require("../../../services/productService");
-const { createResponse } = require("../../../utils/responseBuilder");
 
 jest.mock("../../../services/productService", () => ({
   getProductByIdWithCount: jest.fn(),

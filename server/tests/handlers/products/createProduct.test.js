@@ -1,6 +1,5 @@
 const { createProduct } = require("../../../handlers/products");
 const { createProductWithStock } = require("../../../services/productService");
-const { createResponse } = require("../../../utils/responseBuilder");
 
 jest.mock("../../../services/productService", () => ({
   createProductWithStock: jest.fn(),
