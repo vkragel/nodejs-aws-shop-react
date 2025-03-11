@@ -4,6 +4,8 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { Table, BillingMode, AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 
 export class ProductService extends Construct {
   public readonly api: apigateway.RestApi;
@@ -27,6 +29,11 @@ export class ProductService extends Construct {
       partitionKey: { name: "product_id", type: AttributeType.STRING },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       billingMode: BillingMode.PAY_PER_REQUEST,
+    });
+
+    const catalogItemsQueue = new sqs.Queue(this, "CatalogItemsQueue", {
+      queueName: "catalogItemsQueue",
+      visibilityTimeout: cdk.Duration.seconds(30),
     });
 
     // Lambda Functions Creation
@@ -64,15 +71,29 @@ export class ProductService extends Construct {
       "createProduct"
     );
 
+    const catalogBatchProcessLambda = createLambdaFunction(
+      "CatalogBatchProcessLambda",
+      "processCatalogBatch"
+    );
+
+    catalogBatchProcessLambda.addEventSource(
+      new lambdaEventSources.SqsEventSource(catalogItemsQueue, {
+        batchSize: 5,
+      })
+    );
+
     // allow lambda function have access to read and write in DynamoDB
     // it creates IAM policy which allows Lambda function to do GetItem, PutItem, Scan, DeleteItem etc
     // without this method, the lambda will not have permission to access the DynamoDB table.
     this.productsTable.grantReadData(getProductsListLambda);
     this.productsTable.grantReadData(getProductByIdLambda);
     this.productsTable.grantWriteData(createProductLambda);
+    this.productsTable.grantWriteData(catalogBatchProcessLambda);
     this.stocksTable.grantReadData(getProductsListLambda);
     this.stocksTable.grantReadData(getProductByIdLambda);
     this.stocksTable.grantWriteData(createProductLambda);
+
+    catalogItemsQueue.grantConsumeMessages(catalogBatchProcessLambda);
 
     // API Gateway Creation
     // Creates REST API with "ProductServiceApi" name
