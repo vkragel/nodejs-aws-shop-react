@@ -1,8 +1,10 @@
-const { randomUUID } = require("crypto");
-const { createProductWithStock } = require("../../services/productService");
+const {
+  createProductWithStock,
+  buildProduct,
+} = require("../../services/productService");
 const { createResponse } = require("../../utils/responseBuilder");
 const logger = require("../../utils/logger");
-const { productSchema } = require("../../utils/productSchema");
+const { productSchema } = require("../../utils/productValidation");
 
 exports.createProduct = async (event) => {
   logger.info("Received request to create a product", { event });
@@ -38,12 +40,7 @@ exports.createProduct = async (event) => {
     });
   }
 
-  const { title, price, description, count } = result.data;
-
-  const product_id = randomUUID();
-
-  const product = { id: product_id, title, price, description };
-  const stock = { product_id, count };
+  const { product, stock } = buildProduct(result.data);
 
   try {
     logger.info("Creating product and stock", { product, stock });
