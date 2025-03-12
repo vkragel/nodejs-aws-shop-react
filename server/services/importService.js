@@ -88,7 +88,7 @@ const parseCsv = async (stream) => {
         } catch (error) {
           logger.error("Failed to send message to SQS", {
             error: error.message,
-            row: transformedRow,
+            totalRows: rows.length,
           });
 
           reject(error);
