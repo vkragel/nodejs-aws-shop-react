@@ -2,6 +2,7 @@ const { createProduct } = require("../../../handlers/products");
 const { createProductWithStock } = require("../../../services/productService");
 
 jest.mock("../../../services/productService", () => ({
+  ...jest.requireActual("../../../services/productService"),
   createProductWithStock: jest.fn(),
 }));
 
@@ -32,84 +33,33 @@ describe("createProduct handler", () => {
     expect(body.message).toBe("Invalid JSON format");
   });
 
-  test("should return status code 400 if title is empty", async () => {
-    const event = {
-      body: JSON.stringify({
-        title: "",
-        description: "Test Description",
-        price: 20,
-        count: 20,
-      }),
+  test("should return status code 400 and handle validation errors", async () => {
+    const invalidProduct = {
+      title: "",
+      price: -10,
+      count: -5,
+      description: "",
     };
+    const event = { body: JSON.stringify(invalidProduct) };
+    createProductWithStock.mockImplementation(() => {});
 
     const response = await createProduct(event);
 
     expect(response.statusCode).toBe(400);
 
-    const body = JSON.parse(response.body);
-    expect(body.message).toBe(
-      "Title is required and must be a non-empty string"
-    );
-  });
+    const { message, errors } = JSON.parse(response.body);
+    expect(message).toBe("Validation error");
 
-  test("should return status code 400 if price is empty", async () => {
-    const event = {
-      body: JSON.stringify({
-        title: "Test Title",
-        description: "Test Description",
-        price: null,
-        count: 20,
-      }),
+    const expectedErrors = {
+      title: ["Title is required"],
+      price: ["Price must be greater than 0"],
+      count: ["Count cannot be negative"],
+      description: ["Description is required"],
     };
 
-    const response = await createProduct(event);
-
-    expect(response.statusCode).toBe(400);
-
-    const body = JSON.parse(response.body);
-    expect(body.message).toBe(
-      "Price is required and must be a positive number"
-    );
-  });
-
-  test("should return status code 400 if description is empty", async () => {
-    const event = {
-      body: JSON.stringify({
-        title: "Test Title",
-        description: null,
-        price: 20,
-        count: 20,
-      }),
-    };
-
-    const response = await createProduct(event);
-
-    expect(response.statusCode).toBe(400);
-
-    const body = JSON.parse(response.body);
-    expect(body.message).toBe(
-      "Description is required and must be a non-empty string"
-    );
-  });
-
-  test("should return status code 400 if count is empty", async () => {
-    const event = {
-      body: JSON.stringify({
-        title: "Test Title",
-        price: 20,
-        description: "Test Description",
-        count: null,
-      }),
-    };
-
-    const response = await createProduct(event);
-
-    expect(response.statusCode).toBe(400);
-
-    const body = JSON.parse(response.body);
-    expect(body.message).toBe(
-      "Count is required and must be a positive number"
-    );
+    Object.entries(expectedErrors).forEach(([key, errorMessages]) => {
+      expect(errors[key]._errors).toEqual(errorMessages);
+    });
   });
 
   test("should return status code 201 if product is valid", async () => {
