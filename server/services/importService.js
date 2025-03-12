@@ -2,11 +2,12 @@ const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const logger = require("../utils/logger");
 const { s3, getObject, moveObject } = require("../utils/s3");
-const { pipeline } = require("stream/promises");
 const csv = require("csv-parser");
 const { UPLOADED_FOLDER, PARSED_FOLDER } = require("../config");
+const { sendMessageToSQS } = require("../utils/sqs");
 
 const bucketName = process.env.BUCKET_NAME;
+const queueUrl = process.env.CATALOG_ITEMS_QUEUE_URL;
 
 const generateSignedUrl = async (fileName, expiresIn = 180) => {
   const fileKey = `${UPLOADED_FOLDER}${fileName}`;
@@ -48,6 +49,7 @@ const parseCsv = async (stream) => {
   logger.info("Starting CSV parsing...");
 
   let rowCount = 0;
+  const rows = [];
 
   const headers = {
     title: "title",
@@ -56,52 +58,52 @@ const parseCsv = async (stream) => {
     count: "count",
   };
 
-  try {
-    await pipeline(
-      stream,
-      csv({ skipLines: 1, headers: Object.keys(headers) }),
-      async function* (source) {
-        for await (const row of source) {
-          if (Object.keys(row).length === 0) {
-            logger.warn("Empty row detected", { rowNumber: rowCount + 1 });
-            continue;
+  return new Promise((resolve, reject) => {
+    stream
+      .pipe(csv({ skipLines: 1, headers: Object.keys(headers) }))
+      .on("data", (row) => {
+        if (Object.keys(row).length === 0) return;
+
+        rowCount++;
+        const transformedRow = {
+          title: row.title,
+          description: row.description,
+          price: Number(row.price),
+          count: Number(row.count),
+        };
+
+        rows.push(transformedRow);
+      })
+      .on("end", async () => {
+        try {
+          for (const row of rows) {
+            await sendMessageToSQS(queueUrl, row);
           }
 
-          rowCount++;
-
-          const transformedRow = {
-            title: row.title,
-            description: row.description,
-            price: Number(row.price),
-            count: Number(row.count),
-          };
-
-          logger.info(`Parsed CSV row ${rowCount}`, {
-            rowNumber: rowCount,
-            columnCount: Object.keys(transformedRow).length,
-            columnNames: Object.keys(transformedRow),
-            data: transformedRow,
+          logger.info("CSV parsing completed successfully.", {
+            totalRows: rowCount,
           });
+
+          resolve();
+        } catch (error) {
+          logger.error("Failed to send message to SQS", {
+            error: error.message,
+            row: transformedRow,
+          });
+
+          reject(error);
         }
-      }
-    );
+      })
+      .on("error", (error) => {
+        logger.error("Failed to parse CSV file", {
+          error: error.message,
+          stack: error.stack,
+          rowsProcessed: rowCount,
+        });
 
-    if (rowCount === 0) {
-      logger.warn("No rows were parsed from the CSV file");
-    } else {
-      logger.info("CSV parsing completed successfully.", {
-        totalRows: rowCount,
+        reject(error);
       });
-    }
-  } catch (error) {
-    logger.error("Failed to parse CSV file", {
-      error: error.message,
-      stack: error.stack,
-      rowsProcessed: rowCount,
-    });
-
-    throw new Error("Failed to parse CSV file");
-  }
+  });
 };
 
 const processImportFile = async (bucket, key) => {
