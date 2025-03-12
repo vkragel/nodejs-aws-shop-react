@@ -7,7 +7,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 
-export class ProductService extends Construct {
+export class ProductServiceStack extends cdk.Stack {
   public readonly api: apigateway.RestApi;
   public readonly productsTable: Table;
   public readonly stocksTable: Table;
@@ -34,6 +34,7 @@ export class ProductService extends Construct {
     const catalogItemsQueue = new sqs.Queue(this, "CatalogItemsQueue", {
       queueName: "catalogItemsQueue",
       visibilityTimeout: cdk.Duration.seconds(30),
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     // Lambda Functions Creation
@@ -52,6 +53,7 @@ export class ProductService extends Construct {
         environment: {
           PRODUCTS_TABLE: this.productsTable.tableName,
           STOCKS_TABLE: this.stocksTable.tableName,
+          CATALOG_ITEMS_QUEUE_URL: catalogItemsQueue.queueUrl,
         },
       });
     };
@@ -92,6 +94,7 @@ export class ProductService extends Construct {
     this.stocksTable.grantReadData(getProductsListLambda);
     this.stocksTable.grantReadData(getProductByIdLambda);
     this.stocksTable.grantWriteData(createProductLambda);
+    this.stocksTable.grantWriteData(catalogBatchProcessLambda);
 
     catalogItemsQueue.grantConsumeMessages(catalogBatchProcessLambda);
 
@@ -130,6 +133,16 @@ export class ProductService extends Construct {
     new cdk.CfnOutput(this, "ApiGatewayURL", {
       value: this.api.url,
       description: "Base API URL",
+    });
+
+    new cdk.CfnOutput(this, "CatalogItemsQueueUrl", {
+      value: catalogItemsQueue.queueUrl,
+      description: "Catalog Items Queue Url",
+    });
+
+    new cdk.CfnOutput(this, "CatalogItemsQueueArn", {
+      value: catalogItemsQueue.queueArn,
+      exportName: "CatalogItemsQueueArn",
     });
   }
 }
