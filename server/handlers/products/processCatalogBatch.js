@@ -4,6 +4,7 @@ const {
   createProductWithStock,
   buildProduct,
 } = require("../../services/productService");
+const { createResponse } = require("../../utils/responseBuilder");
 
 exports.processCatalogBatch = async (event) => {
   logger.info("Received request to process catalog batch", { event });
@@ -43,18 +44,27 @@ exports.processCatalogBatch = async (event) => {
   }
 
   try {
-    await Promise.all(
-      validItems.map((item) => {
-        const { product, stock } = buildProduct(item);
+    const products = validItems.map((item) => {
+      const { product, stock } = buildProduct(item);
+      return { product, stock };
+    });
 
+    await Promise.all(
+      products.map(({ product, stock }) => {
         logger.info("Creating product and stock", { product, stock });
 
         return createProductWithStock(product, stock);
       })
     );
 
-    logger.info(`Successfully processed ${validItems.length} valid items.`, {
-      validItems,
+    logger.info(`Successfully processed ${products.length} valid items.`, {
+      products,
+    });
+
+    return createResponse(201, {
+      message: "Successfully processed catalog batch",
+      processed: products,
+      invalid: invalidItems,
     });
   } catch (error) {
     logger.error("Error occurred while processing catalog batch", {
