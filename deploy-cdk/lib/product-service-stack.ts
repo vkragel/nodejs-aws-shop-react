@@ -33,12 +33,17 @@ export class ProductServiceStack extends cdk.Stack {
 
     const catalogItemsQueue = new sqs.Queue(this, "CatalogItemsQueue", {
       queueName: "catalogItemsQueue",
-      visibilityTimeout: cdk.Duration.seconds(30),
+      visibilityTimeout: cdk.Duration.seconds(60),
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      receiveMessageWaitTime: cdk.Duration.seconds(20),
     });
 
     // Lambda Functions Creation
-    const createLambdaFunction = (id: string, handler: string) => {
+    const createLambdaFunction = (
+      id: string,
+      handler: string,
+      options?: { [key: string]: any }
+    ) => {
       return new NodejsFunction(this, id, {
         // determines which language-specific environment will be used and its version
         runtime: lambda.Runtime.NODEJS_18_X,
@@ -55,6 +60,7 @@ export class ProductServiceStack extends cdk.Stack {
           STOCKS_TABLE: this.stocksTable.tableName,
           CATALOG_ITEMS_QUEUE_URL: catalogItemsQueue.queueUrl,
         },
+        ...options,
       });
     };
 
@@ -75,12 +81,16 @@ export class ProductServiceStack extends cdk.Stack {
 
     const catalogBatchProcessLambda = createLambdaFunction(
       "CatalogBatchProcessLambda",
-      "processCatalogBatch"
+      "processCatalogBatch",
+      { timeout: cdk.Duration.seconds(30) }
     );
 
     catalogBatchProcessLambda.addEventSource(
       new lambdaEventSources.SqsEventSource(catalogItemsQueue, {
         batchSize: 5,
+        // Lambda will wait up to 20 seconds to collect messages before processing
+        maxBatchingWindow: cdk.Duration.seconds(20),
+        reportBatchItemFailures: true,
       })
     );
 
@@ -130,14 +140,9 @@ export class ProductServiceStack extends cdk.Stack {
       new apigateway.LambdaIntegration(getProductByIdLambda)
     );
 
-    new cdk.CfnOutput(this, "ApiGatewayURL", {
+    new cdk.CfnOutput(this, "BaseProductApiUrl", {
       value: this.api.url,
-      description: "Base API URL",
-    });
-
-    new cdk.CfnOutput(this, "CatalogItemsQueueUrl", {
-      value: catalogItemsQueue.queueUrl,
-      description: "Catalog Items Queue Url",
+      description: "Base Product API URL",
     });
 
     new cdk.CfnOutput(this, "CatalogItemsQueueArn", {

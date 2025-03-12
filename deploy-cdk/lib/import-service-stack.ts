@@ -91,5 +91,10 @@ export class ImportServiceStack extends cdk.Stack {
         },
       }
     );
+
+    new cdk.CfnOutput(this, "BaseImportApiUrl", {
+      value: api.url,
+      description: "Base Import API URL",
+    });
   }
 }

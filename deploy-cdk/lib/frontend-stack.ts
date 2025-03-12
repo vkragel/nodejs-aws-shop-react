@@ -95,5 +95,22 @@ export class FrontendStack extends cdk.Stack {
       // additional: AWS Console -> CloudFormation -> select our stack -> open "Outputs" tab
       description: "Website URL",
     });
+
+    new cdk.CfnOutput(this, "DistributionId", {
+      // distribution.distributionDomainName - automatically created URL CloudFront
+      // additional: we should see "CloudFrontURL: {CloudFront URL}"
+      value: this.distribution.distributionId,
+
+      // this parameter is used for AWS Console
+      // the description helps you understand what exactly this Output does
+      // the description is useful if you have a lot of parameters
+      // additional: AWS Console -> CloudFormation -> select our stack -> open "Outputs" tab
+      description: "Distribution Id",
+    });
+
+    new cdk.CfnOutput(this, "BucketName", {
+      value: this.bucket.bucketName,
+      description: "Bucket Name",
+    });
   }
 }
