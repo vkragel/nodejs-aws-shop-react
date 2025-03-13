@@ -6,6 +6,8 @@ import { Table, BillingMode, AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as snsSubscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 
 export class ProductServiceStack extends cdk.Stack {
   public readonly api: apigateway.RestApi;
@@ -38,6 +40,28 @@ export class ProductServiceStack extends cdk.Stack {
       receiveMessageWaitTime: cdk.Duration.seconds(20),
     });
 
+    const createProductTopic = new sns.Topic(this, "CreateProductTopic", {
+      topicName: "createProductTopic",
+    });
+
+    createProductTopic.addSubscription(
+      new snsSubscriptions.EmailSubscription("vladkrag259@gmail.com", {
+        filterPolicy: {
+          price: sns.SubscriptionFilter.numericFilter({ greaterThan: 1000 }),
+        },
+      })
+    );
+
+    createProductTopic.addSubscription(
+      new snsSubscriptions.EmailSubscription("dmitrilop221@gmail.com", {
+        filterPolicy: {
+          price: sns.SubscriptionFilter.numericFilter({
+            lessThanOrEqualTo: 1000,
+          }),
+        },
+      })
+    );
+
     // Lambda Functions Creation
     const createLambdaFunction = (
       id: string,
@@ -59,6 +83,7 @@ export class ProductServiceStack extends cdk.Stack {
           PRODUCTS_TABLE: this.productsTable.tableName,
           STOCKS_TABLE: this.stocksTable.tableName,
           CATALOG_ITEMS_QUEUE_URL: catalogItemsQueue.queueUrl,
+          CREATE_PRODUCT_TOPIC_ARN: createProductTopic.topicArn,
         },
         ...options,
       });
@@ -107,6 +132,8 @@ export class ProductServiceStack extends cdk.Stack {
     this.stocksTable.grantWriteData(catalogBatchProcessLambda);
 
     catalogItemsQueue.grantConsumeMessages(catalogBatchProcessLambda);
+
+    createProductTopic.grantPublish(catalogBatchProcessLambda);
 
     // API Gateway Creation
     // Creates REST API with "ProductServiceApi" name
