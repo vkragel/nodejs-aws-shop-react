@@ -5,6 +5,7 @@ const {
   buildProduct,
 } = require("../../services/productService");
 const { createResponse } = require("../../utils/responseBuilder");
+const { publishMessageToSNS } = require("../../utils/sns");
 
 exports.processCatalogBatch = async (event) => {
   logger.info("Received request to process catalog batch", { event });
@@ -50,10 +51,12 @@ exports.processCatalogBatch = async (event) => {
     });
 
     await Promise.all(
-      products.map(({ product, stock }) => {
+      products.map(async ({ product, stock }) => {
         logger.info("Creating product and stock", { product, stock });
 
-        return createProductWithStock(product, stock);
+        await createProductWithStock(product, stock);
+
+        await publishMessageToSNS(product);
       })
     );
 
