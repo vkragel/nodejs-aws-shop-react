@@ -1,7 +1,10 @@
+const {
+  createProductWithStock,
+  buildProduct,
+} = require("../../services/productService");
 const { createResponse } = require("../../utils/responseBuilder");
-const { createProductWithStock } = require("../../services/productService");
-const { randomUUID } = require("crypto");
 const logger = require("../../utils/logger");
+const { productSchema } = require("../../utils/productValidation");
 
 exports.createProduct = async (event) => {
   logger.info("Received request to create a product", { event });
@@ -24,50 +27,20 @@ exports.createProduct = async (event) => {
     return createResponse(400, { message: "Invalid JSON format" });
   }
 
-  const { title, price, description, count } = parsedBody;
+  logger.info("Parsed request body", parsedBody);
 
-  logger.info("Parsed request body", { title, price, description, count });
+  const result = productSchema.safeParse(parsedBody);
 
-  if (!title || typeof title !== "string" || title.trim().length === 0) {
-    logger.warn("Invalid title", { title });
+  if (!result.success) {
+    logger.warn("Validation error", { errors: result.error.format() });
 
     return createResponse(400, {
-      message: "Title is required and must be a non-empty string",
+      message: "Validation error",
+      errors: result.error.format(),
     });
   }
 
-  if (typeof price !== "number" || price <= 0) {
-    logger.warn("Invalid price", { price });
-
-    return createResponse(400, {
-      message: "Price is required and must be a positive number",
-    });
-  }
-
-  if (
-    !description ||
-    typeof description !== "string" ||
-    description.trim().length === 0
-  ) {
-    logger.warn("Invalid description", { description });
-
-    return createResponse(400, {
-      message: "Description is required and must be a non-empty string",
-    });
-  }
-
-  if (typeof count !== "number" || count < 0) {
-    logger.warn("Invalid count", { count });
-
-    return createResponse(400, {
-      message: "Count is required and must be a positive number",
-    });
-  }
-
-  const product_id = randomUUID();
-
-  const product = { id: product_id, title, price, description };
-  const stock = { product_id, count };
+  const { product, stock } = buildProduct(result.data);
 
   try {
     logger.info("Creating product and stock", { product, stock });

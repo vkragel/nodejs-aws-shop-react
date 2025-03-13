@@ -8,7 +8,11 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "deploy:product": "npm run build && cdk deploy ProductServiceStack",
+    "deploy:import": "npm run build && cdk deploy ImportServiceStack",
+    "deploy:frontend": "npm run build && cdk deploy FrontendStack",
+    "deploy:backend": "npm run build && cdk deploy ProductServiceStack ImportServiceStack"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",

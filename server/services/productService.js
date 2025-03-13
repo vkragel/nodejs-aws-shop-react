@@ -5,9 +5,19 @@ const {
   transactWrite,
 } = require("../utils/dynamoDb");
 const logger = require("../utils/logger");
+const { randomUUID } = require("crypto");
 
 const PRODUCTS_TABLE_NAME = process.env.PRODUCTS_TABLE;
 const STOCKS_TABLE_NAME = process.env.STOCKS_TABLE;
+
+const buildProduct = ({ title, description, price, count }) => {
+  const product_id = randomUUID();
+
+  return {
+    product: { id: product_id, title, description, price },
+    stock: { product_id, count },
+  };
+};
 
 const getAllProductsWithStock = async () => {
   try {
@@ -126,6 +136,7 @@ const createProductWithStock = async (product, stock) => {
 };
 
 module.exports = {
+  buildProduct,
   getAllProductsWithStock,
   getProductByIdWithCount,
   createProductWithStock,
