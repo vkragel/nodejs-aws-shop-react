@@ -11,8 +11,9 @@
     "cdk": "cdk",
     "deploy:product": "npm run build && cdk deploy ProductServiceStack",
     "deploy:import": "npm run build && cdk deploy ImportServiceStack",
+    "deploy:authorization": "npm run build && cdk deploy AuthorizationServiceStack",
     "deploy:frontend": "npm run build && cdk deploy FrontendStack",
-    "deploy:backend": "npm run build && cdk deploy ProductServiceStack ImportServiceStack"
+    "deploy:backend": "npm run build && cdk deploy ProductServiceStack ImportServiceStack AuthorizationServiceStack"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -30,6 +31,7 @@
     "@aws-cdk/aws-s3": "^1.204.0",
     "@aws-cdk/aws-s3-deployment": "^1.204.0",
     "aws-cdk-lib": "2.178.1",
-    "constructs": "^10.0.0"
+    "constructs": "^10.0.0",
+    "dotenv": "^16.4.7"
   }
 }
