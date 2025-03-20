@@ -13,7 +13,7 @@
     "deploy:import": "npm run build && cdk deploy ImportServiceStack",
     "deploy:authorization": "npm run build && cdk deploy AuthorizationServiceStack",
     "deploy:frontend": "npm run build && cdk deploy FrontendStack",
-    "deploy:backend": "npm run build && cdk deploy ProductServiceStack ImportServiceStack AuthorizationServiceStack"
+    "deploy:backend": "npm run build && cdk deploy AuthorizationServiceStack ProductServiceStack ImportServiceStack"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
