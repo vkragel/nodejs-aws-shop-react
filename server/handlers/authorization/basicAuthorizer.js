@@ -1,5 +1,4 @@
 const logger = require("../../utils/logger");
-const { createResponse } = require("../../utils/responseBuilder");
 const { parseToken, decodeToken } = require("../../utils/token");
 const { generatePolicy } = require("../../utils/policy");
 
@@ -11,9 +10,7 @@ exports.basicAuthorizer = async (event) => {
   if (!authorizationToken) {
     logger.warn("Unauthorized: No authorization token provided");
 
-    return createResponse(401, {
-      message: "Unauthorized: No authorization token provided",
-    });
+    return generatePolicy("user", "Deny", event.methodArn);
   }
 
   const tokenData = parseToken(authorizationToken);
@@ -24,9 +21,7 @@ exports.basicAuthorizer = async (event) => {
       tokenData,
     });
 
-    return createResponse(403, {
-      message: "Forbidden: Invalid token format",
-    });
+    return generatePolicy("user", "Deny", event.methodArn);
   }
 
   const decodedCredentials = decodeToken(tokenData.encodedCredentials);
@@ -37,9 +32,7 @@ exports.basicAuthorizer = async (event) => {
       tokenData,
     });
 
-    return createResponse(403, {
-      message: "Forbidden: Failed to decode token",
-    });
+    return generatePolicy(decodedCredentials.login, "Deny", event.methodArn);
   }
 
   const expectedPassword = process.env[decodedCredentials.login];
@@ -49,9 +42,7 @@ exports.basicAuthorizer = async (event) => {
       login: decodedCredentials.login,
     });
 
-    return createResponse(403, {
-      message: "Forbidden: Invalid credentials",
-    });
+    return generatePolicy(decodedCredentials.login, "Deny", event.methodArn);
   }
 
   logger.info("Authorization successful", {

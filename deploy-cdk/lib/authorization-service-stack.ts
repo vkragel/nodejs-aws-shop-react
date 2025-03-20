@@ -3,6 +3,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export class AuthorizationServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string) {
@@ -27,9 +28,13 @@ export class AuthorizationServiceStack extends cdk.Stack {
       "basicAuthorizer"
     );
 
+    basicAuthorizerLambda.grantInvoke(
+      new iam.ServicePrincipal("apigateway.amazonaws.com")
+    );
+
     new cdk.CfnOutput(this, "BasicAuthorizerArn", {
       value: basicAuthorizerLambda.functionArn,
-      description: "Basic Authorizer Lambda ARN",
+      exportName: "BasicAuthorizerArn",
     });
   }
 }

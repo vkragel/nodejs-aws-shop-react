@@ -14,6 +14,8 @@ export class ImportServiceStack extends cdk.Stack {
 
     const queueArn = cdk.Fn.importValue("CatalogItemsQueueArn");
 
+    const basicAuthorizerLambdaArn = cdk.Fn.importValue("BasicAuthorizerArn");
+
     const bucket = new s3.Bucket(this, "Bucket", {
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -26,6 +28,19 @@ export class ImportServiceStack extends cdk.Stack {
         },
       ],
     });
+
+    const importAuthorizer = new apigateway.TokenAuthorizer(
+      this,
+      "ImportAuthorizer",
+      {
+        handler: NodejsFunction.fromFunctionArn(
+          this,
+          "AuthorizerFunction",
+          basicAuthorizerLambdaArn
+        ),
+        identitySource: apigateway.IdentitySource.header("Authorization"),
+      }
+    );
 
     const catalogItemsQueue = sqs.Queue.fromQueueAttributes(
       this,
@@ -89,8 +104,34 @@ export class ImportServiceStack extends cdk.Stack {
         requestParameters: {
           "method.request.querystring.name": true,
         },
+        authorizationType: apigateway.AuthorizationType.CUSTOM,
+        authorizer: importAuthorizer,
       }
     );
+
+    api.addGatewayResponse("UNAUTHORIZED", {
+      type: apigateway.ResponseType.UNAUTHORIZED,
+      statusCode: "401",
+      templates: {
+        "application/json": '{ "message": "Unauthorized" }',
+      },
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'*'",
+      },
+    });
+
+    api.addGatewayResponse("ACCESS_DENIED", {
+      type: apigateway.ResponseType.ACCESS_DENIED,
+      statusCode: "403",
+      templates: {
+        "application/json": '{ "message": "Access denied" }',
+      },
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'*'",
+      },
+    });
 
     new cdk.CfnOutput(this, "BaseImportApiUrl", {
       value: api.url,
