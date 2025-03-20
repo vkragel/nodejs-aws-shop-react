@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import FrontendStack from "../stacks/frontend";
-import BackendStack from "../stacks/backend";
+import { FrontendStack } from "../lib/frontend-stack";
+import { ProductServiceStack } from "../lib/product-service-stack";
+import { ImportServiceStack } from "../lib/import-service-stack";
 
 const app = new cdk.App();
 
-new FrontendStack(app, "FrontendStack");
+new ProductServiceStack(app, "ProductServiceStack");
 
-new BackendStack(app, "BackendStack");
+new ImportServiceStack(app, "ImportServiceStack");
+
+new FrontendStack(app, "FrontendStack");

@@ -1,3 +1,4 @@
+import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
@@ -5,10 +6,13 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import { RemovalPolicy } from "aws-cdk-lib";
 import * as s3event from "aws-cdk-lib/aws-s3-notifications";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 
-export class ImportService extends Construct {
+export class ImportServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string) {
     super(scope, id);
+
+    const queueArn = cdk.Fn.importValue("CatalogItemsQueueArn");
 
     const bucket = new s3.Bucket(this, "Bucket", {
       removalPolicy: RemovalPolicy.DESTROY,
@@ -23,6 +27,14 @@ export class ImportService extends Construct {
       ],
     });
 
+    const catalogItemsQueue = sqs.Queue.fromQueueAttributes(
+      this,
+      "ImportedQueue",
+      {
+        queueArn: queueArn,
+      }
+    );
+
     const createLambdaFunction = (id: string, handler: string) => {
       return new NodejsFunction(this, id, {
         runtime: Runtime.NODEJS_18_X,
@@ -30,6 +42,7 @@ export class ImportService extends Construct {
         handler: handler,
         environment: {
           BUCKET_NAME: bucket.bucketName,
+          CATALOG_ITEMS_QUEUE_URL: catalogItemsQueue.queueUrl,
         },
       });
     };
@@ -55,6 +68,8 @@ export class ImportService extends Construct {
       { prefix: "uploaded/" }
     );
 
+    catalogItemsQueue.grantSendMessages(importFileParserLambda);
+
     const api = new apigateway.RestApi(this, "ImportServiceApi", {
       defaultCorsPreflightOptions: {
         allowOrigins: ["*"],
@@ -76,5 +91,10 @@ export class ImportService extends Construct {
         },
       }
     );
+
+    new cdk.CfnOutput(this, "BaseImportApiUrl", {
+      value: api.url,
+      description: "Base Import API URL",
+    });
   }
 }
