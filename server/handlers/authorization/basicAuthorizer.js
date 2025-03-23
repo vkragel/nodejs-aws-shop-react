@@ -32,7 +32,7 @@ exports.basicAuthorizer = async (event) => {
       tokenData,
     });
 
-    return generatePolicy(decodedCredentials.login, "Deny", event.methodArn);
+    return generatePolicy("user", "Deny", event.methodArn);
   }
 
   const expectedPassword = process.env[decodedCredentials.login];
