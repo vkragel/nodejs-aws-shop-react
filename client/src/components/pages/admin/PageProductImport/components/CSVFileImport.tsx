@@ -1,7 +1,8 @@
 import React from "react";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { enqueueErrorSnackbar, enqueueSuccessSnackbar } from "~/utils/snackbar";
 
 type CSVFileImportProps = {
   url: string;
@@ -28,21 +29,33 @@ export default function CSVFileImport({ url, title }: CSVFileImportProps) {
 
     if (!file) return;
 
-    // Get the presigned URL
-    const response = await axios({
-      method: "GET",
-      url,
-      params: {
-        name: encodeURIComponent(file.name),
-      },
-    });
-    console.log("File to upload: ", file.name);
-    console.log("Uploading to: ", response.data);
-    const result = await fetch(response.data, {
-      method: "PUT",
-      body: file,
-    });
-    console.log("Result: ", result);
+    const storageToken = localStorage.getItem("authorization_key") || "";
+    const token_header = storageToken ? `Basic ${storageToken}` : "";
+
+    try {
+      const response = await axios({
+        method: "GET",
+        url,
+        params: { name: encodeURIComponent(file.name) },
+        headers: { Authorization: token_header },
+      });
+      const result = await fetch(response.data, { method: "PUT", body: file });
+      console.log("Result: ", result);
+      enqueueSuccessSnackbar("CSV parsing completed successfully!");
+    } catch (err) {
+      console.log("err", err);
+      if ((err as AxiosError)?.response?.status === 401) {
+        enqueueErrorSnackbar(
+          "Unauthorized: Your session expired or you are not logged in."
+        );
+      }
+      if ((err as AxiosError)?.response?.status === 403) {
+        enqueueErrorSnackbar(
+          "Forbidden: You don't have permission to access this."
+        );
+      }
+    }
+
     setFile(undefined);
   };
   return (
