@@ -26,7 +26,6 @@ export default function Orders() {
             <TableCell>From</TableCell>
             <TableCell align="right">Items count</TableCell>
             <TableCell align="right">Address</TableCell>
-            <TableCell align="right">Status</TableCell>
             <TableCell align="right">Action</TableCell>
           </TableRow>
         </TableHead>
@@ -38,9 +37,6 @@ export default function Orders() {
               </TableCell>
               <TableCell align="right">{order.items.length}</TableCell>
               <TableCell align="right">{order.address?.address}</TableCell>
-              <TableCell align="right">
-                {order.statusHistory[order.statusHistory.length - 1].status}
-              </TableCell>
               <TableCell align="right">
                 <Button
                   size="small"
