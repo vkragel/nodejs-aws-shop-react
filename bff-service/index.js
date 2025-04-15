@@ -21,9 +21,11 @@ fastify.register(cartRoutes);
 fastify.register(importRoutes);
 fastify.register(orderRoutes);
 
+const port = process.env.PORT || 4000;
+
 const start = async () => {
   try {
-    await fastify.listen({ port: 4000, host: "0.0.0.0" });
+    await fastify.listen({ port, host: "0.0.0.0" });
     console.log("Gateway listening on port 4000");
   } catch (err) {
     fastify.log.error(err);

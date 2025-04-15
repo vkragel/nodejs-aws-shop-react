@@ -1,5 +1,7 @@
 import fp from "fastify-plugin";
 import NodeCache from "node-cache";
+import { getCachedData, setCacheData } from "../utils/cache.js";
+import { proxyRequest } from "../utils/proxy.js";
 
 const productCache = new NodeCache({ stdTTL: 120 });
 
@@ -17,37 +19,21 @@ export default fp(async function (fastify) {
   }
 
   fastify.all("/products", async (req, reply) => {
-    try {
-      const cachedData = productCache.get("products");
+    const cachedResult = getCachedData(productCache, "products");
 
-      if (cachedData) {
-        fastify.log.info("Returning cached products list");
-        return reply.code(200).send(cachedData);
-      }
-
-      const targetUrl = `${upstream}${req.url}`;
-
-      const response = await fetch(targetUrl, {
-        method: req.method,
-        headers: req.headers,
-        body: ["GET", "HEAD"].includes(req.method)
-          ? null
-          : JSON.stringify(req.body),
-      });
-
-      const responseBody = await response.text();
-
-      productCache.set("products", responseBody);
-
-      const headers = {};
-      response.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-
-      reply.code(response.status).headers(headers).send(responseBody);
-    } catch (err) {
-      fastify.log.error(err);
-      reply.code(500).send({ error: "Failed to connect to product service" });
+    if (cachedResult.hit) {
+      fastify.log.info("Returning cached products list");
+      return reply.code(200).send(cachedResult.data);
     }
+
+    const targetUrl = `${upstream}${req.url}`;
+
+    const proxyResponse = await proxyRequest(targetUrl, req, reply);
+
+    if (proxyResponse.statusCode === 200) {
+      setCacheData(productCache, "products", proxyResponse.body);
+    }
+
+    return proxyResponse;
   });
 });
