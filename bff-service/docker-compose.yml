@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastify-backend
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+nginx-proxy-manager:
+  image: jc21/nginx-proxy-manager:latest
+  container_name: nginx-proxy-manager
+  restart: unless-stopped
+  ports:
+    - "80:80"       # HTTP
+    - "81:81"       # Admin panel
+    - "443:443"     # HTTPS
+  environment:
+    DB_SQLITE_FILE: "/data/database.sqlite"
+  volumes:
+    - ./data/nginx:/data
+    - ./data/letsencrypt:/etc/letsencrypt
