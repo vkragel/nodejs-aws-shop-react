@@ -1,8 +1,11 @@
 const API_PATHS = {
-  product: "http://localhost:4000",
-  order: "http://localhost:4000",
-  import: "http://localhost:4000",
-  cart: "http://localhost:4000",
+  product:
+    "http://vkragel-bff-service-api-production.eu-west-1.elasticbeanstalk.com",
+  order:
+    "http://vkragel-bff-service-api-production.eu-west-1.elasticbeanstalk.com",
+  import:
+    "http://vkragel-bff-service-api-production.eu-west-1.elasticbeanstalk.com",
+  cart: "http://vkragel-bff-service-api-production.eu-west-1.elasticbeanstalk.com",
   bff: "",
 };
 
