@@ -29,7 +29,7 @@ export default function CSVFileImport({ url, title }: CSVFileImportProps) {
 
     if (!file) return;
 
-    const storageToken = localStorage.getItem("authorization_key") || "";
+    const storageToken = localStorage.getItem("authorization_token") || "";
     const token_header = storageToken ? `Basic ${storageToken}` : "";
 
     try {
