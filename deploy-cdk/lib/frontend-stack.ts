@@ -32,25 +32,11 @@ export class FrontendStack extends cdk.Stack {
     // Distribution creation
     this.distribution = new cloudfront.Distribution(this, "ReactShopCDN", {
       defaultBehavior: {
-        // by default, S3 Buckets closed from public access
-        // CloudFront needs to receive files directly from S3, but our bucket shouldn't be public
-        // OAC allows CloudFront safely read files from S3 even if our bucket is not public
-        // additional: without OAC, we should make our bucket public
         origin: origins.S3BucketOrigin.withOriginAccessControl(this.bucket),
-
-        // determines which protocols are allowed for users accessing your site through CloudFront
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-
-        // determines how CloudFront caches content
-        // when user opens CloudFront URL, our files can be cached on CloudFront Servers
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
       },
-
-      // if user opens "{url}/", index.html will be downloaded
       defaultRootObject: "index.html",
-
-      // determines how CloudFront handles errors 403 and 404 and which pages CloudFront should redirect users
-      // additional: if server returns 403/404, CloudFront returns index.html with 200 response status
       errorResponses: [
         {
           httpStatus: 403,
@@ -63,6 +49,19 @@ export class FrontendStack extends cdk.Stack {
           responsePagePath: "/index.html",
         },
       ],
+      additionalBehaviors: {
+        "/api/*": {
+          origin: new origins.HttpOrigin(
+            "vkragel-bff-service-development.eu-west-1.elasticbeanstalk.com",
+            {
+              protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+            }
+          ),
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER,
+        },
+      },
     });
 
     // Deployment Setup

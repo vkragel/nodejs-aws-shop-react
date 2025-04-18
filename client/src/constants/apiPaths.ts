@@ -1,8 +1,11 @@
 const API_PATHS = {
-  product: "http://vkragel-bff-api-production.eu-west-1.elasticbeanstalk.com",
-  order: "http://vkragel-bff-api-production.eu-west-1.elasticbeanstalk.com",
-  import: "http://vkragel-bff-api-production.eu-west-1.elasticbeanstalk.com",
-  cart: "http://vkragel-bff-api-production.eu-west-1.elasticbeanstalk.com",
+  product:
+    "http://vkragel-bff-service-development.eu-west-1.elasticbeanstalk.com/api",
+  order:
+    "http://vkragel-bff-service-development.eu-west-1.elasticbeanstalk.com/api",
+  import:
+    "http://vkragel-bff-service-development.eu-west-1.elasticbeanstalk.com/api",
+  cart: "http://vkragel-bff-service-development.eu-west-1.elasticbeanstalk.com/api",
   bff: "",
 };
 

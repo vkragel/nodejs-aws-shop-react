@@ -12,13 +12,13 @@ export default fp(async function (fastify) {
     fastify.log.warn(
       "PRODUCT_SERVICE_URL is not defined. All /product requests will return 502."
     );
-    fastify.all("/products", async (req, reply) => {
+    fastify.all("/api/products", async (req, reply) => {
       reply.code(502).send({ error: "Cannot process request" });
     });
     return;
   }
 
-  fastify.all("/products", async (req, reply) => {
+  fastify.all("/api/products", async (req, reply) => {
     const cachedResult = getCachedData(productCache, "products");
 
     if (cachedResult.hit) {
@@ -26,7 +26,8 @@ export default fp(async function (fastify) {
       return reply.code(200).send(cachedResult.data);
     }
 
-    const targetUrl = `${upstream}${req.url}`;
+    const strippedPath = req.url.replace(/^\/api/, "");
+    const targetUrl = `${upstream}${strippedPath}`;
 
     const proxyResponse = await proxyRequest(targetUrl, req, reply);
 
