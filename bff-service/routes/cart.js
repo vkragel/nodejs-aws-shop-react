@@ -8,13 +8,13 @@ export default fp(async function (fastify) {
     fastify.log.warn(
       "CART_SERVICE_URL is not defined. All /cart requests will return 502."
     );
-    fastify.all("/api/cart", async (req, reply) => {
+    fastify.all("/cart", async (req, reply) => {
       reply.code(502).send({ error: "Cannot process request" });
     });
     return;
   }
 
-  fastify.all("/api/cart", async (req, reply) => {
+  fastify.all("/cart", async (req, reply) => {
     const strippedPath = req.url.replace(/^\/api/, "");
     const targetUrl = `${upstream}${strippedPath}`;
     await proxyRequest(targetUrl, req, reply);
