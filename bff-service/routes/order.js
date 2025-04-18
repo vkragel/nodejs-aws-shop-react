@@ -15,8 +15,7 @@ export default fp(async function (fastify) {
   }
 
   fastify.all("/order", async (req, reply) => {
-    const strippedPath = req.url.replace(/^\/api/, "");
-    const targetUrl = `${upstream}${strippedPath}`;
+    const targetUrl = `${upstream}${req.url}`;
     await proxyRequest(targetUrl, req, reply);
   });
 });

@@ -26,8 +26,7 @@ export default fp(async function (fastify) {
       return reply.code(200).send(cachedResult.data);
     }
 
-    const strippedPath = req.url.replace(/^\/api/, "");
-    const targetUrl = `${upstream}${strippedPath}`;
+    const targetUrl = `${upstream}${req.url}`;
 
     const proxyResponse = await proxyRequest(targetUrl, req, reply);
 
